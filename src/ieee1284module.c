@@ -24,6 +24,7 @@
 #if PY_MAJOR_VERSION >= 3
     #define PyInt_FromLong PyLong_FromLong
 		#define PyString_FromString PyBytes_FromString
+    #define PyString_FromStringAndSize PyUnicode_FromStringAndSize
 #endif
 
 #ifndef PyVarObject_HEAD_INIT
