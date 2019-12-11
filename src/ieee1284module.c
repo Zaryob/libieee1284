@@ -21,6 +21,20 @@
 #include <structmember.h>
 #include "ieee1284.h"
 
+#if PY_MAJOR_VERSION >= 3
+    #define PyInt_FromLong PyLong_FromLong
+		#define PyString_FromString PyBytes_FromString
+#endif
+
+#ifndef PyVarObject_HEAD_INIT
+    #define PyVarObject_HEAD_INIT(type, size) \
+        PyObject_HEAD_INIT(type) size,
+#endif
+
+#ifndef Py_TYPE
+    #define Py_TYPE(ob) (((PyObject*)(ob))->ob_type)
+#endif
+
 static PyObject *pyieee1284_error;
 
 typedef struct {
@@ -53,7 +67,7 @@ Parport_dealloc (ParportObject *self)
 	if (self->port)
 		ieee1284_unref (self->port);
 
-	self->ob_type->tp_free ((PyObject *) self);
+	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *
@@ -672,13 +686,36 @@ static PyMethodDef Ieee1284Methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
+#if PY_MAJOR_VERSION >= 3
+  static struct PyModuleDef ieee1284_moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "ieee1284", /* m_name */
+    NULL,      /* m_doc */
+    -1,                  /* m_size */
+    Ieee1284Methods,    /* m_methods */
+    NULL,                /* m_reload */
+    NULL,                /* m_traverse */
+    NULL,                /* m_clear */
+    NULL,                /* m_free */
+  };
+#endif
+
 #ifndef PyMODINIT_FUNC
 #define PyMODINIT_FUNC void
 #endif
 PyMODINIT_FUNC
-initieee1284 (void)
+#if PY_MAJOR_VERSION >= 3
+PyInit_ieee1284(void)
+#else
+initieee1284(void)
+#endif
 {
-	PyObject *m = Py_InitModule ("ieee1284", Ieee1284Methods);
+	#if PY_MAJOR_VERSION >= 3
+    PyObject *m  = PyModule_Create(&ieee1284_moduledef);
+	#else
+	  PyObject *m = Py_InitModule ("ieee1284", Ieee1284Methods);
+	#endif
+
 	PyObject *d = PyModule_GetDict (m);
 	PyObject *c;
 
